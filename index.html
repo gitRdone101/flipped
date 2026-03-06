@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Flipped">
+<meta name="theme-color" content="#0e0e0e">
+<title>FLIPPED — Resell Tracker</title>
+<link rel="manifest" href="manifest.json">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #0e0e0e; --surface: #161616; --surface2: #1e1e1e; --border: #2a2a2a;
+  --accent: #e8ff47; --accent2: #ff6b35; --text: #f0f0f0; --muted: #555;
+  --green: #4ade80; --red: #f87171;
+  --safe-bottom: env(safe-area-inset-bottom, 16px);
+}
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+body { background: var(--bg); color: var(--text); font-family: 'DM Sans', sans-serif; min-height: 100vh; overscroll-behavior: none; }
+
+.header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 14px 20px; padding-top: calc(14px + env(safe-area-inset-top, 0px));
+  background: var(--bg); border-bottom: 1px solid var(--border); position: sticky; top: 0; z-index: 50;
+}
+.logo { font-family: 'Bebas Neue', sans-serif; font-size: 1.8rem; letter-spacing: 0.12em; color: var(--accent); }
+.logo span { color: var(--text); }
+
+.bottom-nav {
+  position: fixed; bottom: 0; left: 0; right: 0;
+  background: var(--surface); border-top: 1px solid var(--border);
+  display: flex; padding-bottom: var(--safe-bottom); z-index: 50;
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 10px 8px; background: none; border: none; color: var(--muted); cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 0.62rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase;
+}
+.nav-btn.active { color: var(--accent); }
+.nav-btn .icon { font-size: 1.2rem; }
+
+main { padding: 16px; padding-bottom: calc(80px + var(--safe-bottom)); max-width: 700px; margin: 0 auto; }
+
+.stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; border-top: 3px solid var(--accent); }
+.stat-card.green { border-top-color: var(--green); }
+.stat-card.red { border-top-color: var(--red); }
+.stat-card.orange { border-top-color: var(--accent2); }
+.stat-label { font-size: 0.6rem; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 5px; }
+.stat-value { font-family: 'Bebas Neue', sans-serif; font-size: 1.6rem; line-height: 1; color: var(--text); }
+.stat-value.green { color: var(--green); }
+.stat-value.red { color: var(--red); }
+
+/* SEARCH */
+.search-wrap {
+  display: flex; align-items: center; gap: 8px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: 10px; padding: 10px 14px; margin-bottom: 10px;
+}
+.search-wrap:focus-within { border-color: var(--accent); }
+.search-input { flex: 1; background: none; border: none; color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 0.92rem; outline: none; }
+.search-input::placeholder { color: var(--muted); }
+.search-clear { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1rem; padding: 0 2px; display: none; }
+.search-clear.visible { display: block; }
+
+/* FILTER CHIPS */
+.filter-scroll { display: flex; gap: 7px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 8px; scrollbar-width: none; }
+.filter-scroll::-webkit-scrollbar { display: none; }
+.chip {
+  flex-shrink: 0; background: var(--surface); border: 1px solid var(--border);
+  color: var(--muted); padding: 6px 12px; border-radius: 20px; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-size: 0.72rem; font-weight: 600; white-space: nowrap; transition: all 0.15s;
+}
+.chip.active { background: var(--accent); border-color: var(--accent); color: #000; }
+
+.result-count { font-size: 0.7rem; color: var(--muted); margin-bottom: 10px; }
+
+.section-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.1rem; letter-spacing: 0.1em; color: var(--accent); margin-bottom: 10px; text-transform: uppercase; }
+
+/* ITEM CARDS */
+.item-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; margin-bottom: 9px; }
+.item-card-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 8px; margin-bottom: 7px; }
+.cat-label { font-size: 0.6rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.07em; margin-bottom: 3px; font-weight: 700; }
+.item-name { font-weight: 700; font-size: 0.93rem; }
+.item-desc { font-size: 0.76rem; color: var(--muted); margin-top: 2px; }
+.badge { display: inline-block; padding: 3px 9px; border-radius: 20px; font-size: 0.63rem; font-weight: 700; text-transform: uppercase; white-space: nowrap; }
+.badge.sold { background: rgba(74,222,128,0.15); color: var(--green); }
+.badge.holding { background: rgba(232,255,71,0.12); color: var(--accent); }
+.item-meta { display: flex; flex-wrap: wrap; gap: 7px; font-size: 0.74rem; color: var(--muted); }
+.item-meta-val { font-family: 'DM Mono', monospace; color: var(--text); }
+.profit-val { font-family: 'DM Mono', monospace; }
+.profit-val.pos { color: var(--green); }
+.profit-val.neg { color: var(--red); }
+.card-actions { display: flex; gap: 8px; margin-top: 9px; padding-top: 9px; border-top: 1px solid var(--border); }
+.card-btn { flex: 1; background: none; border: 1px solid var(--border); color: var(--muted); padding: 7px; border-radius: 6px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.74rem; font-weight: 600; }
+.card-btn.edit:active { border-color: var(--accent); color: var(--accent); }
+.card-btn.del:active { border-color: var(--red); color: var(--red); }
+mark { background: rgba(232,255,71,0.3); color: var(--text); border-radius: 2px; padding: 0 1px; }
+
+.fab {
+  position: fixed; bottom: calc(72px + var(--safe-bottom)); right: 20px;
+  width: 54px; height: 54px; background: var(--accent); border: none; border-radius: 50%;
+  color: #000; font-size: 1.6rem; font-weight: 700; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 4px 20px rgba(232,255,71,0.35); z-index: 40; transition: transform 0.15s;
+}
+.fab:active { transform: scale(0.92); }
+
+.empty { text-align: center; padding: 44px 20px; color: var(--muted); }
+.empty .icon { font-size: 2.2rem; margin-bottom: 10px; }
+.empty p { font-size: 0.88rem; }
+
+.expense-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; margin-bottom: 9px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.expense-amount { font-family: 'DM Mono', monospace; color: var(--red); font-size: 1rem; white-space: nowrap; }
+
+/* MODAL */
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.88); z-index: 100; display: flex; align-items: flex-end; opacity: 0; pointer-events: none; transition: opacity 0.25s; }
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal { background: var(--surface); border: 1px solid var(--border); border-radius: 20px 20px 0 0; padding: 22px 18px; padding-bottom: calc(22px + var(--safe-bottom)); width: 100%; max-height: 92vh; overflow-y: auto; transform: translateY(100%); transition: transform 0.3s cubic-bezier(0.32,0.72,0,1); }
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-handle { width: 40px; height: 4px; background: var(--border); border-radius: 2px; margin: 0 auto 18px; }
+.modal-title { font-family: 'Bebas Neue', sans-serif; font-size: 1.4rem; letter-spacing: 0.08em; color: var(--accent); margin-bottom: 18px; }
+.form-group { margin-bottom: 13px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 11px; }
+label { display: block; font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--muted); font-weight: 600; margin-bottom: 5px; }
+.input-wrap { display: flex; gap: 6px; align-items: center; }
+input[type=text], input[type=number], input[type=date], select, textarea { flex: 1; background: var(--surface2); border: 1px solid var(--border); color: var(--text); padding: 10px 12px; border-radius: 8px; font-family: 'DM Sans', sans-serif; font-size: 0.88rem; width: 100%; -webkit-appearance: none; appearance: none; transition: border-color 0.2s; }
+input:focus, select:focus, textarea:focus { outline: none; border-color: var(--accent); }
+textarea { resize: none; height: 68px; }
+select option { background: var(--surface2); }
+
+.mic-btn { width: 38px; height: 38px; flex-shrink: 0; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.2s; position: relative; }
+.mic-btn.active { background: var(--accent); border-color: var(--accent); }
+.mic-btn.active::after { content: ''; position: absolute; inset: -4px; border-radius: 11px; border: 2px solid var(--accent); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:0.4;transform:scale(1.1)} }
+
+.listen-banner { background: #1c1c00; border: 1px solid var(--accent); border-radius: 8px; padding: 9px 13px; margin-bottom: 14px; font-size: 0.78rem; color: var(--accent); display: flex; align-items: center; gap: 8px; }
+.divider { border: none; border-top: 1px solid var(--border); margin: 14px 0; }
+.section-divider-label { font-size: 0.63rem; text-transform: uppercase; letter-spacing: 0.09em; color: var(--green); font-weight: 700; margin-bottom: 11px; }
+.form-actions { display: flex; gap: 10px; margin-top: 18px; }
+.btn-cancel { flex: 1; background: none; border: 1px solid var(--border); color: var(--muted); padding: 12px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.86rem; font-weight: 600; }
+.btn-save { flex: 2; background: var(--accent); border: none; color: #000; padding: 12px; border-radius: 8px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: 0.86rem; font-weight: 700; }
+.btn-save:active { opacity: 0.85; }
+
+.view { display: none; }
+.view.active { display: block; }
+
+.install-banner { background: var(--surface); border: 1px solid var(--accent); border-radius: 10px; padding: 13px 15px; margin-bottom: 18px; display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.install-banner p { font-size: 0.8rem; color: var(--text); }
+.install-banner p span { color: var(--accent); font-weight: 700; }
+.install-btn { background: var(--accent); border: none; color: #000; padding: 7px 13px; border-radius: 6px; cursor: pointer; font-weight: 700; font-size: 0.76rem; white-space: nowrap; }
+.dismiss-btn { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 1.1rem; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="logo">FLIP<span>PED</span></div>
+  <div style="font-size:0.7rem;color:var(--muted);letter-spacing:0.05em">RESELL TRACKER</div>
+</div>
+
+<main>
+  <div class="install-banner" id="install-banner" style="display:none">
+    <p><span>📲 Install as app</span> — tap to add to home screen</p>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="install-btn" id="install-btn">Install</button>
+      <button class="dismiss-btn" onclick="document.getElementById('install-banner').style.display='none'">✕</button>
+    </div>
+  </div>
+
+  <!-- DASHBOARD -->
+  <div class="view active" id="view-dashboard">
+    <div class="stats-grid">
+      <div class="stat-card green"><div class="stat-label">Revenue</div><div class="stat-value green" id="s-revenue">$0.00</div></div>
+      <div class="stat-card red"><div class="stat-label">Purchases</div><div class="stat-value red" id="s-spent">$0.00</div></div>
+      <div class="stat-card orange"><div class="stat-label">Expenses</div><div class="stat-value" id="s-exp" style="color:var(--accent2)">$0.00</div></div>
+      <div class="stat-card"><div class="stat-label">Net Profit</div><div class="stat-value" id="s-profit">$0.00</div></div>
+    </div>
+    <div class="section-title" id="inv-title">Inventory — Unsold (0)</div>
+    <div id="inv-list"></div>
+    <div class="empty" id="inv-empty"><div class="icon">📦</div><p>Nothing in inventory yet</p></div>
+  </div>
+
+  <!-- ITEMS -->
+  <div class="view" id="view-items">
+    <div class="section-title">All Items</div>
+    <div class="search-wrap">
+      <span style="color:var(--muted)">🔍</span>
+      <input class="search-input" id="search-input" type="text" placeholder="Search name, description, notes..." oninput="onSearch()">
+      <button class="search-clear" id="search-clear" onclick="clearSearch()">✕</button>
+    </div>
+    <div class="filter-scroll" id="filter-chips"></div>
+    <div class="result-count" id="result-count"></div>
+    <div id="items-list"></div>
+    <div class="empty" id="items-empty"><div class="icon">👕</div><p>No items yet — tap + to add one!</p></div>
+  </div>
+
+  <!-- EXPENSES -->
+  <div class="view" id="view-expenses">
+    <div class="section-title">Other Expenses</div>
+    <div id="expenses-list"></div>
+    <div class="empty" id="expenses-empty"><div class="icon">💸</div><p>No expenses yet — tap + to log one!</p></div>
+  </div>
+</main>
+
+<button class="fab" onclick="openAdd()">+</button>
+
+<nav class="bottom-nav">
+  <button class="nav-btn active" id="nav-dashboard" onclick="switchTab('dashboard')"><span class="icon">📊</span>Dashboard</button>
+  <button class="nav-btn" id="nav-items" onclick="switchTab('items')"><span class="icon">👕</span>Items</button>
+  <button class="nav-btn" id="nav-expenses" onclick="switchTab('expenses')"><span class="icon">💸</span>Expenses</button>
+</nav>
+
+<!-- ITEM MODAL -->
+<div class="modal-overlay" id="item-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title" id="item-modal-title">Add Item</div>
+    <div class="listen-banner" id="item-listen-banner" style="display:none">🎙 Listening… speak now. Tap mic again to stop.</div>
+    <div class="form-group">
+      <label>Item Name *</label>
+      <div class="input-wrap">
+        <input type="text" id="f-name" placeholder="e.g. Harley Davidson Eagle Tee">
+        <button class="mic-btn" id="mic-name" onclick="toggleVoice('name')">🎤</button>
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Description</label>
+      <div class="input-wrap">
+        <input type="text" id="f-desc" placeholder="Size, color, condition...">
+        <button class="mic-btn" id="mic-desc" onclick="toggleVoice('desc')">🎤</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Category</label>
+        <select id="f-cat"></select>
+      </div>
+      <div class="form-group">
+        <label>Purchase Price ($) *</label>
+        <div class="input-wrap">
+          <input type="number" id="f-buyprice" placeholder="0.00" step="0.01" min="0">
+          <button class="mic-btn" id="mic-buyprice" onclick="toggleVoice('buyprice')">🎤</button>
+        </div>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Date Purchased</label>
+        <input type="date" id="f-buydate">
+      </div>
+      <div class="form-group">
+        <label>Where Bought</label>
+        <div class="input-wrap">
+          <input type="text" id="f-buyplace" placeholder="Thrift, Estate sale...">
+          <button class="mic-btn" id="mic-buyplace" onclick="toggleVoice('buyplace')">🎤</button>
+        </div>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="section-divider-label">✦ Sale Info — fill in when sold</div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Sale Price ($)</label>
+        <div class="input-wrap">
+          <input type="number" id="f-sellprice" placeholder="0.00" step="0.01" min="0">
+          <button class="mic-btn" id="mic-sellprice" onclick="toggleVoice('sellprice')">🎤</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Date Sold</label>
+        <input type="date" id="f-selldate">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <div class="input-wrap">
+        <textarea id="f-notes" placeholder="Shipping, fees, details..."></textarea>
+        <button class="mic-btn" id="mic-notes" onclick="toggleVoice('notes')" style="align-self:flex-start">🎤</button>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeItemModal()">Cancel</button>
+      <button class="btn-save" onclick="saveItem()">Save Item</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPENSE MODAL -->
+<div class="modal-overlay" id="exp-modal">
+  <div class="modal">
+    <div class="modal-handle"></div>
+    <div class="modal-title">Add Expense</div>
+    <div class="listen-banner" id="exp-listen-banner" style="display:none">🎙 Listening… speak now. Tap mic again to stop.</div>
+    <div class="form-group">
+      <label>Description *</label>
+      <div class="input-wrap">
+        <input type="text" id="e-name" placeholder="e.g. Shipping supplies, eBay fees...">
+        <button class="mic-btn" id="mic-ename" onclick="toggleExpVoice('ename')">🎤</button>
+      </div>
+    </div>
+    <div class="form-row">
+      <div class="form-group">
+        <label>Amount ($) *</label>
+        <div class="input-wrap">
+          <input type="number" id="e-amount" placeholder="0.00" step="0.01" min="0">
+          <button class="mic-btn" id="mic-eamount" onclick="toggleExpVoice('eamount')">🎤</button>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Date</label>
+        <input type="date" id="e-date">
+      </div>
+    </div>
+    <div class="form-group">
+      <label>Notes</label>
+      <div class="input-wrap">
+        <input type="text" id="e-notes" placeholder="Optional details">
+        <button class="mic-btn" id="mic-enotes" onclick="toggleExpVoice('enotes')">🎤</button>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button class="btn-cancel" onclick="closeExpModal()">Cancel</button>
+      <button class="btn-save" onclick="saveExpense()">Save Expense</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const CATEGORIES = ['Shirts','Harley Tees','$12 Jeans','$15-20 Jeans','Bibs','Boots','Sneakers','Jackets','Misc'];
+
+function buildCatSelect() {
+  document.getElementById('f-cat').innerHTML = CATEGORIES.map(c => `<option value="${c}">${c}</option>`).join('');
+}
+
+function buildChips() {
+  const wrap = document.getElementById('filter-chips');
+  const chips = [
+    `<button class="chip active" id="chip-ALL" onclick="setFilter('All')">All</button>`,
+    ...CATEGORIES.map(c => `<button class="chip" id="chip-${cssId(c)}" onclick="setFilter('${c}')">${c}</button>`),
+    `<button class="chip" id="chip-Holding" onclick="setFilter('Holding')">🟡 Holding</button>`,
+    `<button class="chip" id="chip-Sold" onclick="setFilter('Sold')">🟢 Sold</button>`,
+  ];
+  wrap.innerHTML = chips.join('');
+}
+
+function cssId(s) { return s.replace(/[\s\$\-\/]/g,'_'); }
+
+let items = JSON.parse(localStorage.getItem('flipped_items') || '[]');
+let expenses = JSON.parse(localStorage.getItem('flipped_expenses') || '[]');
+let editingId = null;
+let currentTab = 'dashboard';
+let activeFilter = 'All';
+let searchQuery = '';
+
+function save() {
+  localStorage.setItem('flipped_items', JSON.stringify(items));
+  localStorage.setItem('flipped_expenses', JSON.stringify(expenses));
+}
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2); }
+function fmt(n) { return (n != null && n !== '') ? '$' + parseFloat(n).toFixed(2) : '—'; }
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function highlight(text, q) {
+  if (!q) return esc(text);
+  return esc(text).replace(new RegExp(`(${q.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')})`, 'gi'), '<mark>$1</mark>');
+}
+
+// SEARCH & FILTER
+function onSearch() {
+  searchQuery = document.getElementById('search-input').value.trim();
+  document.getElementById('search-clear').classList.toggle('visible', searchQuery.length > 0);
+  renderItems();
+}
+function clearSearch() {
+  document.getElementById('search-input').value = '';
+  searchQuery = '';
+  document.getElementById('search-clear').classList.remove('visible');
+  renderItems();
+}
+function setFilter(cat) {
+  activeFilter = cat;
+  document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+  const id = cat === 'All' ? 'chip-ALL' : cat === 'Holding' ? 'chip-Holding' : cat === 'Sold' ? 'chip-Sold' : 'chip-' + cssId(cat);
+  const el = document.getElementById(id);
+  if (el) el.classList.add('active');
+  renderItems();
+}
+function getFiltered() {
+  let r = [...items];
+  if (activeFilter === 'Holding') r = r.filter(i => !i.sellPrice);
+  else if (activeFilter === 'Sold') r = r.filter(i => !!i.sellPrice);
+  else if (activeFilter !== 'All') r = r.filter(i => i.category === activeFilter);
+  if (searchQuery) {
+    const q = searchQuery.toLowerCase();
+    r = r.filter(i =>
+      (i.name||'').toLowerCase().includes(q) ||
+      (i.desc||'').toLowerCase().includes(q) ||
+      (i.notes||'').toLowerCase().includes(q) ||
+      (i.buyPlace||'').toLowerCase().includes(q) ||
+      (i.category||'').toLowerCase().includes(q)
+    );
+  }
+  return r.reverse();
+}
+
+// TABS
+function switchTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('view-' + tab).classList.add('active');
+  document.getElementById('nav-' + tab).classList.add('active');
+  render();
+}
+function openAdd() { currentTab === 'expenses' ? openExpModal() : openItemModal(); }
+
+// RENDER
+function render() { renderDashboard(); renderItems(); renderExpenses(); }
+
+function renderDashboard() {
+  const sold = items.filter(i => i.sellPrice);
+  const revenue = sold.reduce((s,i) => s + parseFloat(i.sellPrice||0), 0);
+  const spent = items.reduce((s,i) => s + parseFloat(i.buyPrice||0), 0);
+  const expTotal = expenses.reduce((s,e) => s + parseFloat(e.amount||0), 0);
+  const profit = revenue - spent - expTotal;
+  document.getElementById('s-revenue').textContent = fmt(revenue);
+  document.getElementById('s-spent').textContent = fmt(spent);
+  document.getElementById('s-exp').textContent = fmt(expTotal);
+  const sp = document.getElementById('s-profit');
+  sp.textContent = (profit >= 0 ? '+' : '') + fmt(profit);
+  sp.className = 'stat-value ' + (profit >= 0 ? 'green' : 'red');
+  const unsold = items.filter(i => !i.sellPrice);
+  document.getElementById('inv-title').textContent = `Inventory — Unsold (${unsold.length})`;
+  const invList = document.getElementById('inv-list');
+  const invEmpty = document.getElementById('inv-empty');
+  if (unsold.length === 0) { invList.innerHTML = ''; invEmpty.style.display = 'block'; return; }
+  invEmpty.style.display = 'none';
+  invList.innerHTML = unsold.map(i => `
+    <div class="item-card">
+      <div class="item-card-header">
+        <div><div class="cat-label">${esc(i.category||'')}</div><div class="item-name">${esc(i.name)}</div>${i.desc?`<div class="item-desc">${esc(i.desc)}</div>`:''}</div>
+        <span class="badge holding">Holding</span>
+      </div>
+      <div class="item-meta">
+        <span>Paid: <span class="item-meta-val">${fmt(i.buyPrice)}</span></span>
+        ${i.buyDate?`<span>📅 ${i.buyDate}</span>`:''}
+        ${i.buyPlace?`<span>📍 ${esc(i.buyPlace)}</span>`:''}
+      </div>
+    </div>`).join('');
+}
+
+function renderItems() {
+  const filtered = getFiltered();
+  const itemsList = document.getElementById('items-list');
+  const itemsEmpty = document.getElementById('items-empty');
+  const countEl = document.getElementById('result-count');
+  if (items.length === 0) { itemsList.innerHTML = ''; itemsEmpty.style.display = 'block'; countEl.textContent = ''; return; }
+  itemsEmpty.style.display = 'none';
+  if (filtered.length === 0) {
+    itemsList.innerHTML = `<div class="empty"><div class="icon">🔍</div><p>No items match — try a different search or filter.</p></div>`;
+    countEl.textContent = '0 results'; return;
+  }
+  const isFiltered = activeFilter !== 'All' || searchQuery;
+  countEl.textContent = isFiltered ? `${filtered.length} of ${items.length} items` : `${items.length} items`;
+  const q = searchQuery;
+  itemsList.innerHTML = filtered.map(i => {
+    const isSold = !!i.sellPrice;
+    const p = isSold ? parseFloat(i.sellPrice) - parseFloat(i.buyPrice) : null;
+    return `<div class="item-card">
+      <div class="item-card-header">
+        <div><div class="cat-label">${highlight(i.category||'', q)}</div><div class="item-name">${highlight(i.name, q)}</div>${i.desc?`<div class="item-desc">${highlight(i.desc,q)}</div>`:''}</div>
+        <span class="badge ${isSold?'sold':'holding'}">${isSold?'Sold':'Holding'}</span>
+      </div>
+      <div class="item-meta">
+        <span>Bought: <span class="item-meta-val">${fmt(i.buyPrice)}</span></span>
+        ${isSold?`<span>Sold: <span class="item-meta-val">${fmt(i.sellPrice)}</span></span>`:''}
+        ${p!==null?`<span>Profit: <span class="profit-val ${p>=0?'pos':'neg'}">${p>=0?'+':''}${fmt(p)}</span></span>`:''}
+        ${i.buyPlace?`<span>📍 ${highlight(i.buyPlace,q)}</span>`:''}
+        ${i.buyDate?`<span>📅 ${i.buyDate}</span>`:''}
+      </div>
+      ${i.notes?`<div style="font-size:0.74rem;color:var(--muted);margin-top:6px">📝 ${highlight(i.notes,q)}</div>`:''}
+      <div class="card-actions">
+        <button class="card-btn edit" onclick="editItem('${i.id}')">✏️ Edit</button>
+        <button class="card-btn del" onclick="deleteItem('${i.id}')">✕ Delete</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderExpenses() {
+  const expList = document.getElementById('expenses-list');
+  const expEmpty = document.getElementById('expenses-empty');
+  if (expenses.length === 0) { expList.innerHTML = ''; expEmpty.style.display = 'block'; return; }
+  expEmpty.style.display = 'none';
+  expList.innerHTML = [...expenses].reverse().map(e => `
+    <div class="expense-card">
+      <div><div style="font-weight:600">${esc(e.name)}</div><div style="font-size:0.74rem;color:var(--muted);margin-top:3px">${e.date||'—'}${e.notes?' · '+esc(e.notes):''}</div></div>
+      <div style="display:flex;align-items:center;gap:10px">
+        <div class="expense-amount">−${fmt(e.amount)}</div>
+        <button class="card-btn del" style="flex:none;padding:6px 10px" onclick="deleteExpense('${e.id}')">✕</button>
+      </div>
+    </div>`).join('');
+}
+
+// ITEM MODAL
+function openItemModal() {
+  editingId = null;
+  document.getElementById('item-modal-title').textContent = 'Add Item';
+  ['f-name','f-desc','f-buyprice','f-buydate','f-buyplace','f-sellprice','f-selldate','f-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('f-cat').value = CATEGORIES[0];
+  document.getElementById('item-modal').classList.add('open');
+}
+function editItem(id) {
+  const item = items.find(i => i.id === id);
+  if (!item) return;
+  editingId = id;
+  document.getElementById('item-modal-title').textContent = 'Edit Item';
+  document.getElementById('f-name').value = item.name||'';
+  document.getElementById('f-desc').value = item.desc||'';
+  document.getElementById('f-cat').value = item.category||CATEGORIES[0];
+  document.getElementById('f-buyprice').value = item.buyPrice||'';
+  document.getElementById('f-buydate').value = item.buyDate||'';
+  document.getElementById('f-buyplace').value = item.buyPlace||'';
+  document.getElementById('f-sellprice').value = item.sellPrice||'';
+  document.getElementById('f-selldate').value = item.sellDate||'';
+  document.getElementById('f-notes').value = item.notes||'';
+  document.getElementById('item-modal').classList.add('open');
+}
+function closeItemModal() { document.getElementById('item-modal').classList.remove('open'); stopVoice(); editingId = null; }
+function saveItem() {
+  const name = document.getElementById('f-name').value.trim();
+  const buyPrice = document.getElementById('f-buyprice').value;
+  if (!name || !buyPrice) { alert('Item name and purchase price are required.'); return; }
+  const data = {
+    name, desc: document.getElementById('f-desc').value.trim(),
+    category: document.getElementById('f-cat').value,
+    buyPrice: parseFloat(buyPrice),
+    buyDate: document.getElementById('f-buydate').value,
+    buyPlace: document.getElementById('f-buyplace').value.trim(),
+    sellPrice: document.getElementById('f-sellprice').value ? parseFloat(document.getElementById('f-sellprice').value) : null,
+    sellDate: document.getElementById('f-selldate').value,
+    notes: document.getElementById('f-notes').value.trim(),
+  };
+  if (editingId) { items = items.map(i => i.id === editingId ? {...i,...data} : i); }
+  else { items.push({ id: uid(), ...data }); }
+  save(); closeItemModal(); render();
+}
+function deleteItem(id) { if (!confirm('Delete this item?')) return; items = items.filter(i => i.id !== id); save(); render(); }
+
+// EXPENSE MODAL
+function openExpModal() {
+  ['e-name','e-amount','e-date','e-notes'].forEach(id => { const el = document.getElementById(id); if(el) el.value=''; });
+  document.getElementById('exp-modal').classList.add('open');
+}
+function closeExpModal() { document.getElementById('exp-modal').classList.remove('open'); stopExpVoice(); }
+function saveExpense() {
+  const name = document.getElementById('e-name').value.trim();
+  const amount = document.getElementById('e-amount').value;
+  if (!name || !amount) { alert('Description and amount required.'); return; }
+  expenses.push({ id: uid(), name, amount: parseFloat(amount), date: document.getElementById('e-date').value, notes: document.getElementById('e-notes').value.trim() });
+  save(); closeExpModal(); render();
+}
+function deleteExpense(id) { if (!confirm('Delete?')) return; expenses = expenses.filter(e => e.id !== id); save(); render(); }
+
+// VOICE
+let recognition = null, activeVoiceField = null;
+const fieldMap = { 'name':'f-name','desc':'f-desc','buyprice':'f-buyprice','buyplace':'f-buyplace','sellprice':'f-sellprice','notes':'f-notes' };
+const expFieldMap = { 'ename':'e-name','eamount':'e-amount','enotes':'e-notes' };
+function toggleVoice(f) { if(activeVoiceField===f){stopVoice();return;} stopVoice(); startVoice(f,fieldMap,'mic-'+f,'item-listen-banner'); }
+function toggleExpVoice(f) { if(activeVoiceField===f){stopExpVoice();return;} stopExpVoice(); startVoice(f,expFieldMap,'mic-'+f,'exp-listen-banner'); }
+function startVoice(field, map, micId, bannerId) {
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  if (!SR) { alert('Voice input requires Chrome or Firefox.'); return; }
+  recognition = new SR();
+  recognition.lang = 'en-US'; recognition.interimResults = false; recognition.maxAlternatives = 1;
+  activeVoiceField = field;
+  document.getElementById(micId).classList.add('active');
+  document.getElementById(bannerId).style.display = 'flex';
+  recognition.onresult = (e) => {
+    const t = e.results[0][0].transcript;
+    const inputId = map[field]; if(inputId) document.getElementById(inputId).value = t;
+    stopAllVoice(micId, bannerId);
+  };
+  recognition.onerror = () => stopAllVoice(micId, bannerId);
+  recognition.onend = () => stopAllVoice(micId, bannerId);
+  recognition.start();
+}
+function stopAllVoice(micId, bannerId) {
+  if(recognition){try{recognition.stop();}catch(e){} recognition=null;}
+  activeVoiceField=null;
+  if(micId){const el=document.getElementById(micId);if(el)el.classList.remove('active');}
+  if(bannerId){const el=document.getElementById(bannerId);if(el)el.style.display='none';}
+}
+function stopVoice() { stopAllVoice(activeVoiceField?'mic-'+activeVoiceField:null,'item-listen-banner'); }
+function stopExpVoice() { stopAllVoice(activeVoiceField?'mic-'+activeVoiceField:null,'exp-listen-banner'); }
+
+document.getElementById('item-modal').addEventListener('click', function(e){if(e.target===this)closeItemModal();});
+document.getElementById('exp-modal').addEventListener('click', function(e){if(e.target===this)closeExpModal();});
+
+// PWA
+let deferredPrompt = null;
+window.addEventListener('beforeinstallprompt', (e) => { e.preventDefault(); deferredPrompt=e; document.getElementById('install-banner').style.display='flex'; });
+document.getElementById('install-btn').addEventListener('click', async () => {
+  if(!deferredPrompt)return; deferredPrompt.prompt(); await deferredPrompt.userChoice;
+  deferredPrompt=null; document.getElementById('install-banner').style.display='none';
+});
+
+buildCatSelect();
+buildChips();
+render();
+</script>
+</body>
+</html>
