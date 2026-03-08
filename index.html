@@ -6,9 +6,9 @@
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Flipped">
+<meta name="apple-mobile-web-app-title" content="Inventory Mgnt">
 <meta name="theme-color" content="#0e0e0e">
-<title>FLIPPED — Resell Tracker</title>
+<title>Inventory Mgnt — Resell Tracker</title>
 <link rel="manifest" href="manifest.json">
 <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -158,8 +158,8 @@ select option { background: var(--surface2); }
 <body>
 
 <div class="header">
-  <div class="logo">FLIP<span>PED</span></div>
-  <div style="font-size:0.7rem;color:var(--muted);letter-spacing:0.05em">RESELL TRACKER</div>
+  <div class="logo">INV<span>ENTORY</span></div>
+  <div style="font-size:0.7rem;color:var(--muted);letter-spacing:0.05em">MGNT</div>
 </div>
 
 <main>
@@ -179,6 +179,33 @@ select option { background: var(--surface2); }
       <div class="stat-card orange"><div class="stat-label">Expenses</div><div class="stat-value" id="s-exp" style="color:var(--accent2)">$0.00</div></div>
       <div class="stat-card"><div class="stat-label">Net Profit</div><div class="stat-value" id="s-profit">$0.00</div></div>
     </div>
+    <!-- DAILY REVENUE -->
+    <div style="background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:20px;">
+      <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--muted);margin-bottom:10px;font-weight:700;">📅 Daily Revenue Lookup</div>
+      <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
+        <input type="date" id="daily-date" style="flex:1;background:var(--surface2);border:1px solid var(--border);color:var(--text);padding:9px 12px;border-radius:8px;font-family:'DM Sans',sans-serif;font-size:0.88rem;-webkit-appearance:none;appearance:none;" onchange="renderDaily()">
+        <button onclick="setToday()" style="background:none;border:1px solid var(--border);color:var(--muted);padding:9px 12px;border-radius:8px;cursor:pointer;font-family:'DM Sans',sans-serif;font-size:0.76rem;font-weight:600;white-space:nowrap;">Today</button>
+      </div>
+      <div id="daily-results" style="display:none;">
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+          <div style="text-align:center;">
+            <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px;">Items Sold</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--accent)" id="daily-count">0</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px;">Revenue</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;color:var(--green)" id="daily-revenue">$0.00</div>
+          </div>
+          <div style="text-align:center;">
+            <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);margin-bottom:4px;">Profit</div>
+            <div style="font-family:'Bebas Neue',sans-serif;font-size:1.4rem;" id="daily-profit">$0.00</div>
+          </div>
+        </div>
+        <div id="daily-items-list" style="margin-top:12px;"></div>
+      </div>
+      <div id="daily-empty" style="font-size:0.8rem;color:var(--muted);text-align:center;padding:8px 0;display:none;">No sales recorded for this date.</div>
+    </div>
+
     <div class="section-title" id="inv-title">Inventory — Unsold (0)</div>
     <div id="inv-list"></div>
     <div class="empty" id="inv-empty"><div class="icon">📦</div><p>Nothing in inventory yet</p></div>
@@ -505,7 +532,45 @@ function renderExpenses() {
     </div>`).join('');
 }
 
-// ITEM MODAL
+// DAILY REVENUE
+function setToday() {
+  const today = new Date().toISOString().split('T')[0];
+  document.getElementById('daily-date').value = today;
+  renderDaily();
+}
+
+function renderDaily() {
+  const date = document.getElementById('daily-date').value;
+  const resultsEl = document.getElementById('daily-results');
+  const emptyEl = document.getElementById('daily-empty');
+  if (!date) { resultsEl.style.display='none'; emptyEl.style.display='none'; return; }
+  const daySales = items.filter(i => i.sellPrice && i.sellDate === date);
+  if (daySales.length === 0) { resultsEl.style.display='none'; emptyEl.style.display='block'; return; }
+  emptyEl.style.display = 'none';
+  resultsEl.style.display = 'block';
+  const revenue = daySales.reduce((s,i) => s + parseFloat(i.sellPrice||0), 0);
+  const profit = daySales.reduce((s,i) => s + (parseFloat(i.sellPrice||0) - parseFloat(i.buyPrice||0)), 0);
+  document.getElementById('daily-count').textContent = daySales.length;
+  document.getElementById('daily-revenue').textContent = fmt(revenue);
+  const profitEl = document.getElementById('daily-profit');
+  profitEl.textContent = (profit >= 0 ? '+' : '') + fmt(profit);
+  profitEl.style.color = profit >= 0 ? 'var(--green)' : 'var(--red)';
+  document.getElementById('daily-items-list').innerHTML = daySales.map(i => {
+    const p = parseFloat(i.sellPrice) - parseFloat(i.buyPrice);
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:7px 0;border-top:1px solid var(--border);font-size:0.8rem;">
+      <div>
+        <div style="font-weight:600">${esc(i.name)}</div>
+        <div style="font-size:0.72rem;color:var(--muted)">${esc(i.category||'')}</div>
+      </div>
+      <div style="text-align:right;">
+        <div style="font-family:'DM Mono',monospace;color:var(--green)">${fmt(i.sellPrice)}</div>
+        <div style="font-family:'DM Mono',monospace;font-size:0.72rem;color:${p>=0?'var(--green)':'var(--red)'}">${p>=0?'+':''}${fmt(p)}</div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+
 function openItemModal() {
   editingId = null;
   document.getElementById('item-modal-title').textContent = 'Add Item';
